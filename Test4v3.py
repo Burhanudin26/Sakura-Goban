@@ -1,13 +1,12 @@
 import pygame
 from sys import exit
-
-BACKGROUND = 'images/ramin2.jpg'  # Nama file gambar latar belakang
-BOARD_SIZE = (1000, 820)  # Ukuran papan
+import sys
+BACKGROUND = 'ramin2.jpg'  # Nama file gambar latar belakang
+MENU_BACK = 'Sakura.jpg'
+BOARD_SIZE = (820, 820)# Ukuran papan
+MENU_SIZE = (820,820)
 WHITE = (255, 255, 255)  # Warna putih
 BLACK = (0, 0, 0)  # Warna hitam
-JENIS_FONT = 'font/monofonto rg.otf'  # Jenis font
-
-
 
 class Stone(object):
     def __init__(self, board, point, color):
@@ -118,21 +117,7 @@ class Board(object):
         self.groups = []
         self.next = BLACK
         self.outline = pygame.Rect(45, 45, 720, 720)
-        self.black_score = 0
-        self.white_score = 0
         self.draw()
-
-    def calculate_score(self):
-        """Calculate the score of each player."""
-        self.black_score = 0
-        self.white_score = 0
-
-        for group in self.groups:
-            for stone in group.stones:
-                if stone.color == BLACK:
-                    self.black_score += 1
-                elif stone.color == WHITE:
-                    self.white_score += 1
 
     def search(self, point=None, points=[]):
         """Search the board for a stone."""
@@ -167,6 +152,7 @@ class Board(object):
                 coords = (165 + (240 * i), 165 + (240 * j))
                 pygame.draw.circle(background, BLACK, coords, 5, 0)
         screen.blit(background, (0, 0))
+        pygame.display.update()
 
     def update_liberties(self, added_stone=None):
         """Updates the liberties of the entire board, group by group."""
@@ -177,95 +163,120 @@ class Board(object):
             group.update_liberties()
         if added_stone:
             added_stone.group.update_liberties()
+            
+def get_font(size):
+    return pygame.font.Font("font.ttf", size)
 
-def draw_score(board):
-    """Draw the score on the right side of the board."""
-    font = pygame.font.Font(JENIS_FONT, 25)
-    
-        # Hapus area skor sebelum menggambar yang baru
-    screen.fill(WHITE, (780, 100, 200, 100))
-    
-    black_text = font.render(f"Black: {board.black_score}", True, BLACK)
-    white_text = font.render(f"White: {board.white_score}", True, BLACK)
-    screen.blit(black_text, (780, 100))
-    screen.blit(white_text, (780, 150))
-    pygame.display.update()
+class Button():
+	def __init__(self, image, pos, text_input, font, base_color, hovering_color):
+		self.image = image
+		self.x_pos = pos[0]
+		self.y_pos = pos[1]
+		self.font = font
+		self.base_color, self.hovering_color = base_color, hovering_color
+		self.text_input = text_input
+		self.text = self.font.render(self.text_input, True, self.base_color)
+		if self.image is None:
+			self.image = self.text
+		self.rect = self.image.get_rect(center=(self.x_pos, self.y_pos))
+		self.text_rect = self.text.get_rect(center=(self.x_pos, self.y_pos))
 
-class Button(object):
-    def __init__(self, text, position, action):
-        self.text = text
-        self.position = position
-        self.action = action
-        self.font = pygame.font.Font(JENIS_FONT, 25)
-        self.rect = pygame.Rect(position, (200, 50))
-        self.color = WHITE
-        self.draw()
+	def update(self, screen):
+		if self.image is not None:
+			screen.blit(self.image, self.rect)
+		screen.blit(self.text, self.text_rect)
+
+	def checkForInput(self, position):
+		if position[0] in range(self.rect.left, self.rect.right) and position[1] in range(self.rect.top, self.rect.bottom):
+			return True
+		return False
+
+	def changeColor(self, position):
+		if position[0] in range(self.rect.left, self.rect.right) and position[1] in range(self.rect.top, self.rect.bottom):
+			self.text = self.font.render(self.text_input, True, self.hovering_color)
+		else:
+			self.text = self.font.render(self.text_input, True, self.base_color)
+
+
+
+class GameScreen:
+    def __init__(self):
+        self.screen = pygame.display.set_mode(BOARD_SIZE, 0, 32)
+        self.background = pygame.image.load(BACKGROUND).convert()
+        self.board = Board()
+
+    def update(self):
+        while True:
+            pygame.time.wait(10)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    exit()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1 and self.board.outline.collidepoint(event.pos):
+                        x = int(round(((event.pos[0] - 5) / 40.0), 0))
+                        y = int(round(((event.pos[1] - 5) / 40.0), 0))
+                        stone = self.board.search(point=(x, y))
+                        if stone:
+                            stone.remove()
+                        else:
+                            added_stone = Stone(self.board, (x, y), self.board.turn())
+                        self.board.update_liberties(added_stone)
 
     def draw(self):
-        pygame.draw.rect(screen, self.color, self.rect, 0)
-        pygame.draw.rect(screen, BLACK, self.rect, 2)
-        text = self.font.render(self.text, True, BLACK)
-        text_rect = text.get_rect(center=self.rect.center)
-        screen.blit(text, text_rect)
+        self.screen.blit(self.background, (0, 0))
+        self.board.draw()
+        pygame.display.update()
 
-    def handle_event(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            if self.rect.collidepoint(event.pos):
-                self.action()
-
-def toggle_pause():
-    global is_game_running
-    is_game_running = not is_game_running
-
-def calculate_and_draw_score():
-    board.calculate_score()
-    draw_score(board)
-
-def main():
-    global is_game_running
-    is_game_running = True
-    pause_button = Button("Pause", (780, 250), toggle_pause)
-
-    while True:
+class MainMenuScreen:
+    def __init__(self):
+        self.screen = pygame.display.set_mode(MENU_SIZE, 0, 32)
+        self.background = pygame.image.load(MENU_BACK).convert()
+        # Initialize the mixer
+        pygame.mixer.init()
+        # Load and play background music
+        pygame.mixer.music.load("Sakura_music.mp3")
+        pygame.mixer.music.play(-1)  # -1 means loop indefinitely
+    
+    def start_game(self):
+        game_screen = GameScreen()
+        game_screen.update()
+        game_screen.draw()
+            
+    def update(self):
         pygame.time.wait(250)
+        MENU_MOUSE_POS = pygame.mouse.get_pos()
+        Title = get_font(70).render("SAKURA GOBAN", True, (255,45,255))
+        MENU_RECT = Title.get_rect(center=(410, 210))
+
+        start_button = Button(image=pygame.image.load("play_button.png"), pos=(420, 350),
+                              text_input="", font=get_font(70), base_color="#d7fcd4", hovering_color="white")
+        exit_button = Button(image=pygame.image.load("quit_button.png"), pos=(420, 550),
+                             text_input="", font=get_font(70), base_color="#d7fcd4", hovering_color="white")
+        self.screen.blit(self.background, (0, 0))
+        self.screen.blit(Title, MENU_RECT)
+
+        for button in [start_button, exit_button]:
+            button.changeColor(MENU_MOUSE_POS)
+            button.update(self.screen)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if start_button.checkForInput(MENU_MOUSE_POS):
+                    self.start_game()
+                elif exit_button.checkForInput(MENU_MOUSE_POS):
+                    pygame.quit()
+                    sys.exit()
 
-            pause_button.handle_event(event)
 
-            if event.type == pygame.MOUSEBUTTONDOWN and is_game_running:
-                if event.button == 1 and board.outline.collidepoint(event.pos):
-                    x = int(round(((event.pos[0] - 5) / 40.0), 0))
-                    y = int(round(((event.pos[1] - 5) / 40.0), 0))
-                    stone = board.search(point=(x, y))
-                    if stone:
-                        stone.remove()
-                    else:
-                        added_stone = Stone(board, (x, y), board.turn())
-                    board.update_liberties(added_stone)
-                    # Update and draw the score in real-time
-                    board.calculate_score()
-                    draw_score(board)
-
-        if is_game_running:
-            notification_text = ""
-        else:
-            notification_text = "Game Paused"
-
-        # Hapus teks yang sudah ada sebelum menggambar yang baru
-        screen.fill(WHITE, (780, 200, 200, 50))
-
-        small_font = pygame.font.Font(JENIS_FONT, 24)
-        notification_surface = small_font.render(notification_text, True, BLACK)
-        screen.blit(notification_surface, (780, 200))
-
-        pygame.display.update()  # Tambahkan pembaruan layar di sini
 
 if __name__ == '__main__':
     pygame.init()
     pygame.display.set_caption('Go Game Board')
     screen = pygame.display.set_mode(BOARD_SIZE, 0, 32)
     background = pygame.image.load(BACKGROUND).convert()
-    board = Board()
-    main()
+    main_menu_screen = MainMenuScreen()
+    while True:
+        main_menu_screen.update()
+        pygame.display.update()
