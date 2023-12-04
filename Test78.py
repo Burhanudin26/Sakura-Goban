@@ -7,6 +7,7 @@ from OpenGL.GLUT import *
 
 BROWN = (0.647, 0.165, 0.165)
 BLACK = (0,0,0)
+WHITE = (1,1,1)
 # Initialize Pygame
 pygame.init()
 
@@ -22,12 +23,12 @@ circles = []
 
 # Function to draw a circle at the specified position
 def draw_circle(x, y, radius=30):
-    glColor3fv(BLACK)
+    glColor3fv(WHITE)
     glBegin(GL_TRIANGLE_FAN)
-    glVertex3f(x, y, 0)
+    glVertex3f(x, y, 5)
     for i in range(360):
         angle = i * 2.0 * 3.14159 / 360
-        glVertex3f(x + radius * math.cos(angle), y + radius * math.sin(angle), 0)
+        glVertex3f(x + radius * math.cos(angle), y + radius * math.sin(angle), 5)
     glEnd()
 
 # Function to check if a point is inside a circle
@@ -45,6 +46,7 @@ def screen():
     glVertex3f(width, height, -1)
     glVertex3f(0, height, -1)
     glEnd()
+    
 
 # Main game loop
 while True:
@@ -61,14 +63,16 @@ while True:
             # If the click is not inside any circle, add a new circle
             if not remove_circles:
                 circles.append((mouse_x, mouse_y, 30))
+                print("click")
             else:
                 # Remove the circles that were clicked inside
+                print("remove")
                 for circle in remove_circles:
                     circles.remove(circle)
 
     # Clear the screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-    glEnable(GL_DEPTH_TEST)
+    glLoadIdentity()  # Reset the modelview matrix
 
     screen()
 

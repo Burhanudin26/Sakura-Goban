@@ -108,15 +108,14 @@ def main():
     width, height = 1280, 720
     pygame.display.set_mode((width, height), DOUBLEBUF | OPENGL | pygame.RESIZABLE)
     pygame.display.set_caption("OpenGL in Pygame")
-    pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLEBUFFERS, 4)
-    pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLESAMPLES, 16)  # Adjust the sample count as needed
+
     glEnable(GL_DEPTH_TEST)  # Mengaktifkan uji kedalaman
     glEnable(GL_BLEND)  # Mengaktifkan blending
     # Set up the perspective projection matrix
-    gluPerspective(45, (width / height), 0.1, 50.0)
+    gluPerspective(30, (width / height), 0.1, 50.0)
 
     # Camera Control
-    glTranslatef(0.0, 0.25, -5)
+    glTranslatef(0.0, 0.1, -8)
     glRotatef(70, 1,0,0)
     # Main game loop
     while True:

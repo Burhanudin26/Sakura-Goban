@@ -108,7 +108,7 @@ class App:
         glMaterialfv(GL_FRONT, GL_SPECULAR, material_specular)
 
         gluPerspective(45, (display[0] / display[1]), 0.1, 50.0)  # Mengatur perspektif
-        glTranslatef(0.0, 0.2, -5.0)  # Menggeser objek dalam sumbu Z negatif
+        glTranslatef(0.0, 0.0, -10.0)  # Menggeser objek dalam sumbu Z negatif
         glRotatef(180, 0, 0, 1)  # Memutar objek 180 derajat sekitar sumbu Z
         glRotatef(-60, 1, 0, 0) 
         glRotatef(0, 0, 1, 0) 
